@@ -128,8 +128,8 @@
     .word.looked-up { background:var(--looked-up); color:var(--looked-up-text); }
     .word.looked-up:hover { filter:brightness(.92); }
 
-    /* TOOLTIP */
-    #floatingTooltip { position:fixed; background:var(--tooltip-bg); color:var(--tooltip-ink); font-size:.82rem; padding:.9rem 1.1rem; border-radius:10px; pointer-events:none; opacity:0; transition:opacity .15s; z-index:9999; min-width:220px; max-width:320px; white-space:normal; text-align:left; line-height:1.5; box-shadow:0 8px 24px rgba(0,0,0,.3); }
+    /* TOOLTIP — pointer-events on so buttons inside are clickable */
+    #floatingTooltip { position:fixed; background:var(--tooltip-bg); color:var(--tooltip-ink); font-size:.82rem; padding:.9rem 1.1rem; border-radius:10px; pointer-events:auto; opacity:0; transition:opacity .15s; z-index:9999; min-width:220px; max-width:320px; white-space:normal; text-align:left; line-height:1.5; box-shadow:0 8px 24px rgba(0,0,0,.3); }
     #floatingTooltip .arrow { position:absolute; left:50%; transform:translateX(-50%); border:6px solid transparent; }
     #floatingTooltip.arrow-down .arrow { top:100%; border-top-color:var(--tooltip-bg); }
     #floatingTooltip.arrow-up   .arrow { bottom:100%; border-bottom-color:var(--tooltip-bg); }
@@ -148,6 +148,16 @@
     [data-theme="dark"] .tooltip-loading::before { border-color:rgba(26,24,20,.2); border-top-color:rgba(26,24,20,.8); }
     @keyframes spin { to { transform:rotate(360deg); } }
     .tooltip-error { font-size:.8rem; color:#E8957A; font-style:italic; }
+    /* In Context button inside tooltip */
+    .tooltip-context-btn { display:inline-flex; align-items:center; gap:4px; margin-top:8px; background:transparent; border:1px solid rgba(232,132,90,.5); border-radius:6px; padding:4px 10px; font-size:.72rem; font-weight:600; color:#E8845A; cursor:pointer; letter-spacing:.04em; text-transform:uppercase; transition:background .15s,border-color .15s; font-family:'DM Sans',sans-serif; }
+    .tooltip-context-btn:hover { background:rgba(232,132,90,.15); border-color:#E8845A; }
+    .tooltip-context-btn.loading { opacity:.6; cursor:default; }
+    .tooltip-context-result { font-size:.8rem; opacity:.9; line-height:1.5; margin-top:6px; padding-top:6px; border-top:1px solid rgba(232,132,90,.25); }
+    /* API key input in settings */
+    .api-key-input { width:100%; border:1.5px solid var(--border); border-radius:8px; padding:.5rem .75rem; font-family:'DM Sans',sans-serif; font-size:.82rem; color:var(--ink); background:var(--bg); outline:none; transition:border-color .2s; }
+    .api-key-input:focus { border-color:var(--accent); }
+    .api-key-input::placeholder { color:var(--ink-light); opacity:.5; font-size:.78rem; }
+    .api-key-hint { font-size:.7rem; color:var(--ink-light); margin-top:.3rem; line-height:1.4; }
 
     /* VOCAB MODAL */
     .modal-overlay { position:fixed; inset:0; background:rgba(26,24,20,.5); z-index:800; display:none; align-items:center; justify-content:center; padding:1rem; backdrop-filter:blur(4px); }
@@ -210,6 +220,11 @@
       <span style="font-size:1.1rem;color:var(--ink-light)">A</span>
       <span class="size-value" id="sizeLabel">16px</span>
     </div>
+  </div>
+  <div class="setting-row">
+    <div class="setting-label">Claude API Key</div>
+    <input class="api-key-input" type="password" id="apiKeyInput" placeholder="sk-ant-api03-…" oninput="saveApiKey(this.value)"/>
+    <div class="api-key-hint">For "In Context" meanings. Stored locally, never shared.<br>Get one free at <b>console.anthropic.com</b></div>
   </div>
 </div>
 
@@ -677,7 +692,13 @@ document.addEventListener('click',e=>{if(touchMode&&!e.target.closest('.word'))h
 function attachListeners(container) {
   container.querySelectorAll('.word').forEach(span=>{
     span.addEventListener('mouseenter',()=>{if(!touchMode) showTooltip(span);});
-    span.addEventListener('mouseleave',()=>{if(!touchMode){hideTooltip();activeWord=null;}});
+    span.addEventListener('mouseleave',(e)=>{
+      if(!touchMode){
+        // Don't hide if mouse moved onto the tooltip (user wants to click In Context)
+        if(e.relatedTarget&&floatingTip.contains(e.relatedTarget)) return;
+        hideTooltip(); activeWord=null;
+      }
+    });
     span.addEventListener('click',e=>{
       if(!touchMode) return;
       e.stopPropagation();
@@ -707,7 +728,7 @@ function showTooltip(span) {
     tooltipBody.innerHTML=definitionCache[word];
     floatingTip.style.opacity='1';
     positionTooltip(span);
-    appendAiSection(word,activeContext,span);
+    appendInContextButton(word,activeContext);
   } else {
     tooltipBody.innerHTML=`<div class="tooltip-loading">Looking up</div>`;
     floatingTip.style.opacity='1';
@@ -729,7 +750,9 @@ function positionTooltip(span) {
   floatingTip.style.top =`${goAbove?r.top-tipH-TOOLTIP_GAP:r.bottom+TOOLTIP_GAP}px`;
   floatingTip.style.left=`${Math.max(8,Math.min((r.left+r.width/2)-tipW/2,window.innerWidth-tipW-8))}px`;
 }
-function hideTooltip(){floatingTip.style.opacity='0';}
+function hideTooltip(){floatingTip.style.opacity='0'; activeWord=null;}
+// Hide tooltip when mouse leaves the tooltip box itself
+floatingTip.addEventListener('mouseleave',()=>{ if(!touchMode) hideTooltip(); });
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
 // ═══════════════════════════════════════
@@ -740,7 +763,7 @@ async function fetchDefinition(word,span) {
     if(span&&activeWord===span){
       tooltipBody.innerHTML=definitionCache[word];
       positionTooltip(span);
-      appendAiSection(word,activeContext,span);
+      appendInContextButton(word,activeContext);
     }
     return;
   }
@@ -753,7 +776,7 @@ async function fetchDefinition(word,span) {
   if(span&&activeWord===span){
     tooltipBody.innerHTML=html;
     positionTooltip(span);
-    if(!html.includes('tooltip-error')) appendAiSection(word,activeContext,span);
+    if(!html.includes('tooltip-error')) appendInContextButton(word,activeContext);
   }
 }
 
@@ -776,46 +799,111 @@ async function fetchWithRetry(word,attempts=3){
 }
 
 // ═══════════════════════════════════════
-// AI CONTEXTUAL DEFINITION
+// API KEY
 // ═══════════════════════════════════════
-function appendAiSection(word,context,span){
-  if(!context||context.length<15) return;
-  const aiId='ai-'+Date.now();
-  tooltipBody.innerHTML+=`<div class="tooltip-ai-divider" id="${aiId}"><div class="tooltip-ai-label">✦ In context</div><div class="tooltip-ai-loading" id="${aiId}-txt">Analysing</div></div>`;
-  positionTooltip(span);
+const API_KEY_STORAGE='cipher-api-key';
+let claudeApiKey='';
+try{ claudeApiKey=localStorage.getItem(API_KEY_STORAGE)||''; }catch(e){}
 
-  const cacheKey=word+'|'+context.slice(0,80);
-  if(aiCache[cacheKey]){
-    const el=document.getElementById(aiId+'-txt');
-    if(el){el.className='tooltip-ai-text';el.textContent=aiCache[cacheKey];positionTooltip(span);}
-    return;
-  }
-  fetchAiContext(word,context,aiId,cacheKey,span);
+// Pre-fill the settings input if a key is already saved
+document.addEventListener('DOMContentLoaded',()=>{
+  if(claudeApiKey) document.getElementById('apiKeyInput').value=claudeApiKey;
+});
+
+function saveApiKey(val){
+  claudeApiKey=val.trim();
+  try{ localStorage.setItem(API_KEY_STORAGE,claudeApiKey); }catch(e){}
 }
 
-async function fetchAiContext(word,context,aiId,cacheKey,span){
+// ═══════════════════════════════════════
+// IN CONTEXT — on-demand button
+// ═══════════════════════════════════════
+const aiCache={};
+
+function appendInContextButton(word,context){
+  if(!context||context.length<10) return;
+  const btnId='ctx-btn-'+Date.now();
+  const resId ='ctx-res-'+Date.now();
+  const cacheKey=word+'|'+context.slice(0,80);
+
+  // Already cached → show result directly, no button needed
+  if(aiCache[cacheKey]){
+    tooltipBody.innerHTML+=`<div class="tooltip-context-result" id="${resId}"><span style="font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#E8845A;">✦ In context</span><br/>${aiCache[cacheKey]}</div>`;
+    positionTooltip(activeWord);
+    return;
+  }
+
+  // Store context on the button via data attribute to avoid closure/escaping issues
+  tooltipBody.innerHTML+=`<button class="tooltip-context-btn" id="${btnId}" data-word="${word}" data-btnid="${btnId}" data-resid="${resId}" data-cachekey="${encodeURIComponent(cacheKey)}" onclick="handleInContext(this)">✦ In Context</button><div id="${resId}"></div>`;
+  positionTooltip(activeWord);
+}
+
+function handleInContext(btn){
+  const word     = btn.dataset.word;
+  const btnId    = btn.dataset.btnid;
+  const resId    = btn.dataset.resid;
+  const cacheKey = decodeURIComponent(btn.dataset.cachekey);
+
+  if(!claudeApiKey){
+    // No key — open settings and highlight the field
+    document.getElementById('settingsPanel').classList.add('open');
+    setTimeout(()=>{
+      const inp=document.getElementById('apiKeyInput');
+      inp.focus(); inp.style.borderColor='var(--accent)';
+      setTimeout(()=>inp.style.borderColor='',2500);
+    },100);
+    return;
+  }
+
+  btn.classList.add('loading');
+  btn.textContent='✦ Fetching…';
+  btn.onclick=null; // prevent double-tap
+
+  fetchAiContext(word,activeContext,btnId,resId,cacheKey);
+}
+
+async function fetchAiContext(word,context,btnId,resId,cacheKey){
+  const btn=document.getElementById(btnId);
+  const res=document.getElementById(resId);
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const response=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':claudeApiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true',
+      },
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
-        max_tokens:80,
-        system:'Explain what a word means in the given sentence context. 1-2 sentences, plain English, no preamble.',
-        messages:[{role:'user',content:`Word: "${word}"\nContext: "${context}"\nWhat does "${word}" mean here?`}]
+        max_tokens:100,
+        system:'Explain what a word means in a specific sentence. Reply in 1-2 plain English sentences. No preamble.',
+        messages:[{role:'user',content:`Word: "${word}"\n\nSentence: "${context.slice(0,400)}"\n\nWhat does "${word}" mean in this sentence?`}]
       })
     });
-    if(!res.ok) throw new Error();
-    const data=await res.json();
+    if(!response.ok){
+      const err=await response.json().catch(()=>({}));
+      throw new Error(err?.error?.message||`Error ${response.status}`);
+    }
+    const data=await response.json();
     const text=data.content?.[0]?.text?.trim()||'';
     if(text){
       aiCache[cacheKey]=text;
-      const el=document.getElementById(aiId+'-txt');
-      if(el&&activeWord===span){el.className='tooltip-ai-text';el.textContent=text;positionTooltip(span);}
+      if(btn) btn.style.display='none';
+      if(res){
+        res.className='tooltip-context-result';
+        res.innerHTML=`<span style="font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#E8845A;">✦ In context</span><br/>${text}`;
+      }
+      positionTooltip(activeWord);
     }
   }catch(e){
-    const el=document.getElementById(aiId+'-txt');
-    if(el) el.style.display='none';
+    if(btn){btn.classList.remove('loading');btn.textContent='✦ In Context';btn.onclick=()=>handleInContext(btn);}
+    if(res){
+      res.className='tooltip-context-result';
+      res.style.color='#E8957A';
+      res.textContent=e.message.includes('401')||e.message.includes('403')?'Invalid API key — check ⚙️ settings.':'Couldn\'t connect. Try again.';
+    }
+    positionTooltip(activeWord);
   }
 }
 
