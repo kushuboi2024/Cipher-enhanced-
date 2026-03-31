@@ -198,6 +198,4 @@ MIT — do whatever you want with it.
 
 ---
 
-*Built by Kushagra — PM at ICICI Bank, IIT Delhi. [LinkedIn](www.linkedin.com/in/kushagra-singhal001
-
-)*
+*Built by Kushagra — PM at ICICI Bank, IIT Delhi. www.linkedin.com/in/kushagra-singhal001*
