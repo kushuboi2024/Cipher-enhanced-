@@ -49,6 +49,7 @@
     /* ── SETTINGS DRAWER ── */
     .drawer { position:fixed; top:0; right:-340px; width:320px; height:100vh; background:var(--paper); border-left:1px solid var(--border); z-index:999; display:flex; flex-direction:column; transition:right .25s ease; box-shadow:-8px 0 32px var(--shadow); overflow-y:auto; }
     .drawer.open { right:0; }
+    @media (max-width:640px) { .drawer { width:100%; right:-100%; } }
     .drawer-head { padding:1.2rem 1.4rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
     .drawer-title { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; }
     .drawer-close { background:transparent; border:none; font-size:1.3rem; cursor:pointer; color:var(--mid); }
@@ -145,9 +146,8 @@
     #defPanel.open { transform:translateY(0); }
     .dp-head { padding:.85rem 1.1rem; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,.1); flex-shrink:0; }
     .dp-word { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; }
-    .dp-close { background:transparent; border:none; color:rgba(255,255,255,.5); font-size:1.2rem; cursor:pointer; line-height:1; }
-    .dp-close:hover { color:#fff; }
-    [data-theme="dark"] .dp-close:hover { color:var(--ink); }
+    .dp-close { background:transparent; border:none; color:var(--tink); opacity:.7; font-size:1.2rem; cursor:pointer; line-height:1; transition:opacity .15s; }
+    .dp-close:hover { opacity:1; }
     .dp-body { padding:1rem 1.1rem; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:.7rem; }
     .dp-phonetic { font-size:.73rem; opacity:.55; font-style:italic; }
     .dp-type { font-size:.68rem; color:#C8A882; font-style:italic; text-transform:uppercase; letter-spacing:.06em; }
@@ -173,7 +173,17 @@
     .dp-ctx-err { font-size:.78rem; color:#E8957A; }
     .dp-ctx-nokey { font-size:.78rem; color:#E8845A; cursor:pointer; text-decoration:underline; }
 
-    @keyframes spin { to { transform:rotate(360deg); } }
+    /* ── DEFINITION PANEL search bar & history ── */
+    .dp-search-row { display:flex; gap:.4rem; padding:.65rem 1.1rem; border-bottom:1px solid rgba(255,255,255,.1); flex-shrink:0; }
+    .dp-search-input { flex:1; border:1px solid rgba(255,255,255,.2); border-radius:7px; padding:.38rem .7rem; font-family:'DM Sans',sans-serif; font-size:.82rem; background:rgba(255,255,255,.1); color:var(--tink); outline:none; transition:border-color .2s; }
+    .dp-search-input::placeholder { color:var(--tink); opacity:.35; }
+    .dp-search-input:focus { border-color:rgba(255,255,255,.5); }
+    [data-theme="dark"] .dp-search-input { background:rgba(26,24,20,.2); }
+    .dp-search-btn { background:var(--accent); color:#fff; border:none; border-radius:7px; padding:.38rem .75rem; font-size:.8rem; font-family:'DM Sans',sans-serif; font-weight:500; cursor:pointer; white-space:nowrap; transition:opacity .15s; }
+    .dp-search-btn:hover { opacity:.85; }
+    .dp-back-btn { background:transparent; border:1px solid rgba(255,255,255,.2); color:var(--tink); border-radius:7px; padding:.38rem .6rem; font-size:.82rem; cursor:pointer; opacity:.7; transition:opacity .15s; flex-shrink:0; }
+    .dp-back-btn:hover { opacity:1; }
+    .dp-back-btn:disabled { opacity:.2; cursor:default; }
 
     /* ── VOCAB MODAL ── */
     .moverlay { position:fixed; inset:0; background:rgba(26,24,20,.5); z-index:500; display:none; align-items:center; justify-content:center; padding:1rem; backdrop-filter:blur(3px); }
@@ -197,6 +207,47 @@
     .empty .ei { font-size:2rem; margin-bottom:.4rem; }
 
     footer { text-align:center; padding:.9rem; font-size:.72rem; color:var(--mid); border-top:1px solid var(--border); background:var(--paper); }
+
+    /* ── MOBILE ── */
+    @media (max-width: 640px) {
+      header { padding:.7rem 1rem; }
+      .tagline { display:none; }
+      .ibtn span:last-child { display:none; } /* hide text labels, keep icons */
+
+      /* Landing */
+      #landing { padding:1.8rem 1rem; gap:1.2rem; }
+      .intro h1 { font-size:1.5rem; }
+      textarea { min-height:140px; font-size:.93rem; }
+      .urow { grid-template-columns:1fr; } /* stack upload zones vertically */
+
+      /* Split view — stack editor above reader on mobile */
+      .spgrid { grid-template-columns:1fr !important; grid-template-rows:auto 1fr; height:auto; min-height:calc(100vh - 58px); }
+      .epanel { border-right:none; border-bottom:1px solid var(--border); max-height:35vh; }
+      .etxt { min-height:120px; }
+      .spgrid.collapsed { grid-template-rows:auto 1fr; }
+      .spgrid.collapsed .epanel { max-height:44px; }
+      /* Collapse button changes meaning on mobile — hides/shows editor */
+      .cbtn::after { content:''; }
+
+      /* PDF view */
+      .pnav { padding:.5rem 1rem; }
+      #pdfContent { padding:1.4rem 1rem; }
+
+      /* Definition panel — full width on mobile */
+      #defPanel { width:100%; border-radius:16px 16px 0 0; }
+
+      /* Vocab modal */
+      .modal { padding:1.2rem; }
+      .vrow { grid-template-columns:90px 55px 1fr; font-size:.78rem; }
+    }
+
+    @media (max-width: 400px) {
+      .intro h1 { font-size:1.3rem; }
+      .hrow { gap:.3rem; }
+      .vrow { grid-template-columns:80px 1fr; } /* drop type column on very small screens */
+      .vrow > div:nth-child(2) { display:none; }
+      .vhdr > div:nth-child(2) { display:none; }
+    }
   </style>
 </head>
 <body>
@@ -342,6 +393,13 @@
     <span class="dp-word" id="dpWord"></span>
     <button class="dp-close" onclick="closeDefPanel()">✕</button>
   </div>
+  <!-- Search bar row -->
+  <div class="dp-search-row">
+    <button class="dp-back-btn" id="dpBackBtn" onclick="goBack()" disabled title="Back">←</button>
+    <input class="dp-search-input" id="dpSearchInput" type="text" placeholder="Look up another word…"
+           onkeydown="if(event.key==='Enter') searchWord()"/>
+    <button class="dp-search-btn" onclick="searchWord()">Look up</button>
+  </div>
   <div class="dp-body" id="dpBody"></div>
 </div>
 
@@ -414,6 +472,12 @@ function saveDefCache() {
 function saveKey(v) {
   claudeKey = v.trim();
   try { localStorage.setItem('cipher-claude-key', claudeKey); } catch(e) {}
+  // If definition panel is open, refresh the context section live
+  if (activeWord && document.getElementById('defPanel').classList.contains('open')) {
+    const body = document.getElementById('dpBody');
+    const cached = defCache[activeWord];
+    if (cached) renderDefBody(body, cached.raw, activeWord);
+  }
 }
 
 // ─────────────────────────────────────────
@@ -750,46 +814,81 @@ function attachClicks(container) {
 
 function onWordClick(span) {
   const word = span.dataset.w;
-
-  // Mark as seen (green)
   if (!STOP.has(word)) {
     seenWords.add(word);
-    // Mark all spans of this word across the page
     document.querySelectorAll(`.w[data-w="${word}"]`).forEach(s => s.classList.add('seen'));
     updateBadge();
   }
-
-  // Open definition panel
-  openDefPanel(word, span);
+  openDefPanel(word, true);   // push previous word to history if panel already open
 }
 
 // ─────────────────────────────────────────
 // DEFINITION PANEL
 // ─────────────────────────────────────────
-let activeWord = '';
+let activeWord   = '';
+let wordHistory  = [];   // navigation stack — previous words viewed in this panel session
 
-function openDefPanel(word, span) {
+function openDefPanel(word, addToHistory = false) {
+  // If panel is already showing a word, push it to history before navigating away
+  if (addToHistory && activeWord && activeWord !== word) {
+    wordHistory.push(activeWord);
+  }
+
   activeWord = word;
   document.getElementById('dpWord').textContent = word;
   document.getElementById('defPanel').classList.add('open');
+  document.getElementById('dpSearchInput').value = '';
+
+  // Update back button state
+  document.getElementById('dpBackBtn').disabled = wordHistory.length === 0;
 
   const body = document.getElementById('dpBody');
 
-  // If cached → show immediately
   if (defCache[word]) {
     renderDefBody(body, defCache[word].raw, word);
     return;
   }
 
-  // Not cached → show spinner and fetch
   body.innerHTML = `<div class="dp-loading">Looking up "<strong>${word}</strong>"</div>`;
   fetchDef(word, body);
 }
 
 function closeDefPanel() {
   document.getElementById('defPanel').classList.remove('open');
-  activeWord = '';
+  activeWord  = '';
+  wordHistory = [];
+  document.getElementById('dpBackBtn').disabled = true;
+  document.getElementById('dpSearchInput').value = '';
 }
+
+// Back button — pop the history stack
+function goBack() {
+  if (!wordHistory.length) return;
+  const prev = wordHistory.pop();
+  activeWord = '';            // clear so openDefPanel doesn't push again
+  openDefPanel(prev, false);  // false = don't push to history on back navigation
+}
+
+// Search bar — look up any word typed by the user
+function searchWord() {
+  const input = document.getElementById('dpSearchInput');
+  const word  = input.value.trim().toLowerCase().replace(/[^a-z'-]/g, '');
+  if (!word) return;
+  input.value = '';
+  openDefPanel(word, true);   // true = push current word to history
+}
+
+// Close def panel when clicking outside it
+document.addEventListener('click', e => {
+  const panel = document.getElementById('defPanel');
+  if (
+    panel.classList.contains('open') &&
+    !panel.contains(e.target) &&
+    !e.target.closest('.w')
+  ) {
+    closeDefPanel();
+  }
+});
 
 function renderDefBody(body, raw, word) {
   if (!raw) {
@@ -806,12 +905,24 @@ function renderDefBody(body, raw, word) {
 }
 
 function contextSection(word) {
+  const hasKey = !!claudeKey;
+  if (!hasKey) {
+    return `
+      <div class="dp-ctx-section">
+        <div class="dp-ctx-label">✦ Get Context</div>
+        <div class="dp-ctx-hint">
+          See what this word means in your specific sentence — powered by Claude AI.<br><br>
+          <span class="dp-ctx-nokey" onclick="openDrawer()">➜ Add your Claude API key in ⚙️ Settings to unlock this</span>
+        </div>
+      </div>
+    `;
+  }
   return `
     <div class="dp-ctx-section">
       <div class="dp-ctx-label">✦ Get Context</div>
-      <div class="dp-ctx-hint">Paste or type the sentence where you found this word, then click <strong>Get Context</strong> to see what it means in that specific context.</div>
+      <div class="dp-ctx-hint">Paste the sentence where you found "<strong>${word}</strong>", then tap Get Context.</div>
       <textarea class="dp-ctx-sel" id="ctxInput" placeholder="Paste the sentence here…"></textarea>
-      <button class="btn btn-sm" style="width:100%;justify-content:center" onclick="getContext('${word}')">Get Context</button>
+      <button class="btn btn-sm" style="width:100%;justify-content:center;margin-top:.3rem" onclick="getContext('${word}')">Get Context</button>
       <div id="ctxResult"></div>
     </div>
   `;
@@ -905,37 +1016,47 @@ async function getContext(word) {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Content-Type':    'application/json',
-        'x-api-key':       claudeKey,
+        'Content-Type':      'application/json',
+        'x-api-key':         claudeKey,
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
-        model:      'claude-sonnet-4-20250514',
-        max_tokens: 120,
-        system:     'You explain what a specific word means in a given sentence. Reply in 1-2 clear, plain English sentences. No preamble or intro phrases.',
+        model:      'claude-opus-4-6',
+        max_tokens: 150,
+        system:     'You explain what a specific word means in a given sentence. Reply in 1-2 clear, plain English sentences. No preamble.',
         messages:   [{ role:'user', content:`Word: "${word}"\nSentence: "${sentence}"\n\nWhat does "${word}" mean in this sentence?` }],
       })
     });
 
+    // Always try to read the response body for a useful error message
+    const data = await res.json();
+
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error?.message || `API error ${res.status}`);
+      const msg = data?.error?.message || `HTTP ${res.status}`;
+      throw new Error(msg);
     }
 
-    const data = await res.json();
     const text = data.content?.[0]?.text?.trim() || '';
     if (text) {
       aiCache[cacheKey] = text;
       if (resultEl) { resultEl.className='dp-ctx-result'; resultEl.textContent=text; }
+    } else {
+      throw new Error('Empty response from Claude');
     }
 
   } catch(e) {
     if (resultEl) {
       resultEl.className = 'dp-ctx-err';
-      resultEl.textContent = e.message.includes('401') || e.message.includes('403')
-        ? 'Invalid API key. Check ⚙️ Settings.'
-        : 'Couldn\'t connect. Try again.';
+      // Show the actual error so we know what went wrong
+      const msg = e.message || '';
+      if (msg.includes('401') || msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('auth')) {
+        resultEl.textContent = '❌ Invalid API key — check ⚙️ Settings.';
+      } else if (msg.includes('CORS') || msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+        resultEl.textContent = '❌ Browser blocked the request (CORS). Try opening the file from a web server, not directly from your computer.';
+      } else {
+        resultEl.textContent = `❌ ${msg || 'Unknown error'}`;
+      }
     }
   }
 }
